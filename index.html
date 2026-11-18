@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZODI 87.9 FM | Red Internacional En Vivo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-deep: #070709;
+            --card-bg: rgba(18, 18, 22, 0.75);
+            --zodi-red: #ff2a2a;
+            --zodi-red-glow: rgba(255, 42, 42, 0.4);
+            --text-white: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.6);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-white);
+            font-family: 'Montserrat', sans-serif;
+            height: 100dvh; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+            position: relative; padding: 16px 14px 8px 14px;
+        }
+        .bg-ambient { position: absolute; inset: 0; z-index: 0; background: radial-gradient(circle at 50% 15%, #1c1c24 0%, #070709 85%); pointer-events: none; }
+        .bg-glow-spot { position: absolute; top: -50px; left: 50%; transform: translateX(-50%); width: 250px; height: 250px; background: var(--zodi-red-glow); filter: blur(80px); border-radius: 50%; z-index: 0; pointer-events: none; }
+        .content { position: relative; z-index: 1; width: 100%; max-width: 400px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; }
+        .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .live-listeners-badge, .clock-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 50px;
+            font-size: 0.76rem; font-weight: 700; color: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .live-dot { width: 7px; height: 7px; background-color: var(--zodi-red); border-radius: 50%; box-shadow: 0 0 8px var(--zodi-red); animation: blink 1.4s infinite ease-in-out; }
+        .live-dot.offline { background-color: #666; box-shadow: none; animation: none; }
+        @keyframes blink { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: 0.4; transform: scale(0.8);} }
+        .station-selector-wrapper { width: 100%; position: relative; background: var(--card-bg); border: 1px solid rgba(255,255,255,0.12); border-radius: 50px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); transition: border-color 0.2s; }
+        .station-selector-wrapper:hover { border-color: rgba(255,42,42,0.4); }
+        .station-select { width: 100%; appearance: none; -webkit-appearance: none; background: transparent; color: #fff; font-family: 'Montserrat', sans-serif; font-size: 0.82rem; font-weight: 700; padding: 10px 36px 10px 16px; border-radius: 50px; cursor: pointer; outline: none; border: none; text-align: center; text-align-last: center; }
+        .station-select option { background-color: #121216; color: #fff; font-weight: 700; padding: 10px; }
+        .select-arrow { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--zodi-red); pointer-events: none; font-size: 0.8rem; }
+        .header-section { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .brand-title { font-weight: 900; font-size: 3.4rem; line-height: 0.95; letter-spacing: -2px; background: linear-gradient(180deg, #fff 40%, #777788 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 6px 15px rgba(0,0,0,0.6)); }
+        .brand-freq { font-weight: 700; font-size: 1.5rem; color: var(--zodi-red); letter-spacing: 2.5px; margin-top: 2px; text-shadow: 0 2px 12px var(--zodi-red-glow); }
+        .on-air-since { font-size: 0.7rem; font-weight: 700; letter-spacing: 1.2px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
+        .date-display { font-size: 0.78rem; color: rgba(255,255,255,0.75); font-weight: 500; text-transform: capitalize; margin-top: 3px; }
+        .center-player { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+        .listening-info { display: flex; flex-direction: column; gap: 3px; }
+        .listening-subtitle { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); }
+        .listening-station { font-size: 0.98rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 0 10px; }
+        .play-btn { width: 74px; height: 74px; border-radius: 50%; background: #fff; border: none; color: var(--zodi-red); font-size: 1.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 0 0 rgba(255,42,42,0.4); transition: transform 0.2s cubic-bezier(0.175,0.885,0.32,1.275); }
+        .play-btn:active { transform: scale(0.92); }
+        .play-btn i { margin-left: 4px; }
+        .play-btn.playing { animation: pulse-ring 2s infinite; }
+        .play-btn.playing i { margin-left: 0; }
+        @keyframes pulse-ring { 0% { box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 0 0 rgba(255,42,42,0.7);} 70% { box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 0 18px rgba(255,42,42,0);} 100% { box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 0 0 rgba(255,42,42,0);} }
+        .equalizer { display: flex; align-items: flex-end; gap: 4px; height: 15px; opacity: 0; transition: opacity 0.3s; }
+        .equalizer.active { opacity: 1; }
+        .bar { width: 4px; height: 5px; background-color: var(--zodi-red); border-radius: 2px; animation: eq 0.8s infinite ease-in-out alternate; }
+        .bar:nth-child(2) { animation-delay: 0.2s; }
+        .bar:nth-child(3) { animation-delay: 0.4s; }
+        .bar:nth-child(4) { animation-delay: 0.1s; }
+        @keyframes eq { 0% { height: 4px; } 100% { height: 15px; } }
+        .bottom-actions { display: flex; align-items: center; justify-content: center; gap: 20px; }
+        .circle-icon-btn { width: 48px; height: 48px; border-radius: 50%; background-color: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; text-decoration: none; box-shadow: 0 6px 18px rgba(0,0,0,0.4); transition: transform 0.2s, background-color 0.2s, color 0.2s; }
+        .circle-icon-btn:hover { transform: translateY(-3px); background-color: #fff; color: var(--bg-deep); }
+        .btn-yt:hover { color: #FF0000 !important; }
+        .btn-fb:hover { color: #1877F2 !important; }
+        .ticker-container { width: 100%; background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.07); overflow: hidden; white-space: nowrap; padding: 5px 0; border-radius: 4px; }
+        .ticker-text { display: inline-block; padding-left: 100%; animation: ticker 30s linear infinite; font-size: 0.74rem; font-weight: 700; color: rgba(255,255,255,0.8); letter-spacing: 0.5px; }
+        @keyframes ticker { 0% { transform: translate3d(0,0,0); } 100% { transform: translate3d(-100%,0,0); } }
+    </style>
+</head>
+<body>
+    <div class="bg-ambient"></div>
+    <div class="bg-glow-spot"></div>
+    <div class="content">
+        <div class="top-bar">
+            <div class="live-listeners-badge">
+                <span class="live-dot" id="live-dot"></span>
+                <i class="fas fa-headphones-alt"></i>
+                <span><strong id="listeners-count">0</strong> en vivo</span>
+            </div>
+            <div class="clock-badge">
+                <i class="far fa-clock"></i>
+                <span id="real-time-clock">00:00:00</span>
+            </div>
+        </div>
+        <div class="station-selector-wrapper">
+            <select id="station-selector" class="station-select" aria-label="Seleccionar país y emisora"></select>
+            <i class="fas fa-chevron-down select-arrow"></i>
+        </div>
+        <div class="header-section">
+            <div class="brand-title">ZODI</div>
+            <div class="brand-freq" id="brand-freq">87.9 FM</div>
+            <div class="on-air-since">On Air Since: 01 Jul 2026</div>
+            <div class="date-display" id="date-display">Cargando fecha...</div>
+        </div>
+        <div class="center-player">
+            <div class="listening-info">
+                <span class="listening-subtitle" id="status-label">Al aire 06:00 a 00:00 • Sintonizado al minuto en vivo</span>
+                <h1 class="listening-station" id="listening-station">🇦🇷 ZODI - ARGENTINA (87.9 FM)</h1>
+            </div>
+            <audio id="radio-stream" preload="metadata" loop>
+                <source id="audio-source" src="" type="audio/mpeg">
+            </audio>
+            <button class="play-btn" id="play-pause-btn" aria-label="Reproducir radio">
+                <i class="fas fa-play" id="play-icon"></i>
+            </button>
+            <div class="equalizer" id="equalizer">
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            </div>
+        </div>
+        <div class="bottom-actions">
+            <!-- Botón de YouTube actualizado con tu enlace -->
+            <a href="https://youtube.com/@zodi87.9fm-d7z?si=Mp5i_5Al8F_hq7U9" target="_blank" class="circle-icon-btn btn-yt" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            <!-- Botón de Facebook con tu enlace -->
+            <a href="https://www.facebook.com/profile.php?id=61596416622609" target="_blank" class="circle-icon-btn btn-fb" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        </div>
+        <div class="ticker-container">
+            <div class="ticker-text">
+                📻 ZODI Radio Internacional • Transmitiendo con la hora real exacta de cada país 🌍 • Publicidad y Contacto Oficial: +54 3446 51-6822 📲 • ¡Audio sincronizado al minuto en vivo! 🔥
+            </div>
+        </div>
+    </div>
+    <script>
+        const STATIONS = [
+            { flag: "🇦🇷", name: "ZODI - ARGENTINA", freq: "87.9", tz: "America/Argentina/Buenos_Aires", off: -3 },
+            { flag: "🇪🇸", name: "RNE - ESPAÑA", freq: "87.7", tz: "Europe/Madrid", off: 1 },
+            { flag: "🇻🇪", name: "RNE - VENEZUELA", freq: "88.1", tz: "America/Caracas", off: -4 },
+            { flag: "🇬🇹", name: "RNE - GUATEMALA", freq: "89.3", tz: "America/Guatemala", off: -6 },
+            { flag: "🇸🇻", name: "RNE - EL SALVADOR", freq: "89.7", tz: "America/El_Salvador", off: -6 },
+            { flag: "🇨🇷", name: "RNE - COSTA RICA", freq: "86.5", tz: "America/Costa_Rica", off: -6 },
+            { flag: "🇳🇮", name: "RNE - NICARAGUA", freq: "88.3", tz: "America/Managua", off: -6 },
+            { flag: "🇭🇳", name: "RNE - HONDURAS", freq: "87.1", tz: "America/Tegucigalpa", off: -6 },
+            { flag: "🇨🇺", name: "RNE - CUBA", freq: "85.7", tz: "America/Havana", off: -5 },
+            { flag: "🇩🇴", name: "RNE - REP. DOMINICANA", freq: "85.9", tz: "America/Santo_Domingo", off: -4 },
+            { flag: "🇵🇷", name: "RNE - PUERTO RICO", freq: "86.1", tz: "America/Puerto_Rico", off: -4 },
+            { flag: "🇺🇾", name: "RNE - URUGUAY", freq: "88.7", tz: "America/Montevideo", off: -3 },
+            { flag: "🇵🇾", name: "RNE - PARAGUAY", freq: "87.3", tz: "America/Asuncion", off: -3 },
+            { flag: "🇵🇪", name: "RNE - PERÚ", freq: "89.5", tz: "America/Lima", off: -5 },
+            { flag: "🇵🇦", name: "RNE - PANAMÁ", freq: "86.9", tz: "America/Panama", off: -5 },
+            { flag: "🇲🇽", name: "RNE - MÉXICO", freq: "87.5", tz: "America/Mexico_City", off: -6 },
+            { flag: "🇺🇸", name: "RNE - ESTADOS UNIDOS", freq: "89.9", tz: "America/New_York", off: -5 },
+            { flag: "🇪🇨", name: "RNE - ECUADOR", freq: "85.5", tz: "America/Guayaquil", off: -5 },
+            { flag: "🇨🇴", name: "RNE - COLOMBIA", freq: "88.9", tz: "America/Bogota", off: -5 },
+            { flag: "🇨🇱", name: "RNE - CHILE", freq: "86.3", tz: "America/Santiago", off: -3 },
+            { flag: "🇧🇷", name: "RNE - BRASIL", freq: "89.1", tz: "America/Sao_Paulo", off: -3 },
+            { flag: "🇧🇴", name: "RNE - BOLIVIA", freq: "88.5", tz: "America/La_Paz", off: -4 }
+        ];
+
+        const DAILY_PROGRAMS = {
+            0: "AQUÍ_ENLACE_DOMINGO",
+            1: "AQUÍ_ENLACE_LUNES",
+            2: "AQUÍ_ENLACE_MARTES",
+            3: "https://www.dropbox.com/scl/fi/jlfauqpj7dwidlo7d04fn/InShot_20260809_121435667-online-audio-converter.com.mp3?rlkey=1czb1lk08k21iuf4rn22f1ypw&st=8n1xjpbd&dl=1", 
+            4: "https://www.dropbox.com/scl/fi/jlfauqpj7dwidlo7d04fn/InShot_20260809_121435667-online-audio-converter.com.mp3?rlkey=1czb1lk08k21iuf4rn22f1ypw&st=8n1xjpbd&dl=1", 
+            5: "https://www.dropbox.com/scl/fi/8vqa9bwsj1w488x30w7gv/InShot_20260802_000022783.mp3?rlkey=kcef5c9dlta5voxk32q419dg1&st=yad7si5n&raw=1", 
+            6: "AQUÍ_ENLACE_SABADO"
+        };
+
+        const audio = document.getElementById('radio-stream');
+        const audioSource = document.getElementById('audio-source');
+        const playBtn = document.getElementById('play-pause-btn');
+        const playIcon = document.getElementById('play-icon');
+        const statusLabel = document.getElementById('status-label');
+        const equalizer = document.getElementById('equalizer');
+        const listenersCount = document.getElementById('listeners-count');
+        const liveDot = document.getElementById('live-dot');
+        const realTimeClock = document.getElementById('real-time-clock');
+        const dateDisplay = document.getElementById('date-display');
+        const stationSelector = document.getElementById('station-selector');
+        const brandFreq = document.getElementById('brand-freq');
+        const listeningStation = document.getElementById('listening-station');
+
+        let currentStationIndex = 0;
+        let isPlaying = false;
+        let lastListenerUpdate = 0;
+
+        STATIONS.forEach((st, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = `${st.flag} ${st.name} — ${st.freq} MHz`;
+            stationSelector.appendChild(option);
+        });
+
+        function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+        function getCountryNow(st) {
+            try {
+                const localStr = new Date().toLocaleString('en-US', { timeZone: st.tz });
+                const d = new Date(localStr);
+                if (!isNaN(d.getTime())) return { date: d };
+            } catch (e) {}
+            const now = new Date();
+            const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+            return { date: new Date(utc + st.off * 3600000) };
+        }
+
+        function updateAudioSourceForDay(countryDate) {
+            const dayOfWeek = countryDate.getDay();
+            const linkForDay = DAILY_PROGRAMS[dayOfWeek] || DAILY_PROGRAMS[3];
+            if (audioSource.src !== linkForDay) {
+                audioSource.src = linkForDay;
+                audio.load();
+            }
+        }
+
+        function formatClock(d) {
+            return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+        }
+
+        function formatDateEs(d) {
+            try {
+                return d.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            } catch (e) {
+                return d.toDateString();
+            }
+        }
+
+        function formatHour12(h) {
+            const suffix = h < 12 ? 'de la mañana' : (h < 19 ? 'de la tarde' : 'de la noche');
+            const h12 = h % 12 === 0 ? 12 : h % 12;
+            return h12 + ' ' + suffix;
+        }
+
+        function syncAudioToLiveClock() {
+            const st = STATIONS[currentStationIndex];
+            const { date: countryNow } = getCountryNow(st);
+            const hours = countryNow.getHours();
+            const minutes = countryNow.getMinutes();
+            const seconds = countryNow.getSeconds();
+
+            const elapsedSecondsSince6AM = ((hours - 6) * 3600) + (minutes * 60) + seconds;
+
+            if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+                audio.currentTime = elapsedSecondsSince6AM % audio.duration;
+            }
+        }
+
+        audio.addEventListener('loadedmetadata', () => {
+            if (isPlaying) {
+                syncAudioToLiveClock();
+            }
+        });
+
+        function updateRealTimeInfo(forceListeners = false) {
+            const st = STATIONS[currentStationIndex];
+            const { date: countryNow } = getCountryNow(st);
+
+            updateAudioSourceForDay(countryNow);
+
+            const hours = countryNow.getHours();
+            const minutes = countryNow.getMinutes();
+
+            realTimeClock.textContent = formatClock(countryNow);
+            dateDisplay.textContent = formatDateEs(countryNow);
+
+            const totalMinutes = hours * 60 + minutes;
+
+            if (hours >= 0 && hours < 6) {
+                listenersCount.textContent = "0";
+                if (!statusLabel.textContent.includes("Apagada")) {
+                    statusLabel.textContent = "Radio Apagada • Horario: 06:00 a 00:00";
+                }
+                liveDot.classList.add('offline');
+                if (isPlaying) {
+                    audio.pause();
+                    playIcon.className = "fas fa-play";
+                    playBtn.classList.remove('playing');
+                    equalizer.classList.remove('active');
+                    isPlaying = false;
+                }
+                return;
+            }
+
+            liveDot.classList.remove('offline');
+            if (!isPlaying && statusLabel.textContent.includes("Apagada")) {
+                statusLabel.textContent = "Al aire 06:00 a 00:00 • Sintonizado al minuto en vivo";
+            }
+
+            const nowMs = Date.now();
+            if (!forceListeners && nowMs - lastListenerUpdate < 6000) return;
+            lastListenerUpdate = nowMs;
+
+            let calculatedListeners = 3000;
+            if (hours >= 6 && hours < 14) {
+                let progress = (totalMinutes - 360) / (8 * 60);
+                calculatedListeners = Math.floor(3500 + (progress * 6500) + (Math.random() * 60 - 30));
+            } else {
+                let progress = (totalMinutes - 840) / (10 * 60);
+                calculatedListeners = Math.floor(10000 - (progress * 8500) + (Math.random() * 60 - 30));
+                if (calculatedListeners < 200) calculatedListeners = 250;
+            }
+            listenersCount.textContent = calculatedListeners.toLocaleString('es-ES');
+        }
+
+        stationSelector.addEventListener('change', () => {
+            currentStationIndex = parseInt(stationSelector.value, 10);
+            const st = STATIONS[currentStationIndex];
+            brandFreq.textContent = st.freq + ' FM';
+            listeningStation.textContent = st.flag + ' ' + st.name + ' (' + st.freq + ' MHz)';
+            audio.pause();
+            updateRealTimeInfo(true);
+            playIcon.className = "fas fa-play";
+            playBtn.classList.remove('playing');
+            equalizer.classList.remove('active');
+            statusLabel.textContent = "Al aire 06:00 a 00:00 • Sintonizado al minuto en vivo";
+            isPlaying = false;
+        });
+
+        setInterval(() => updateRealTimeInfo(false), 250);
+        updateRealTimeInfo(true);
+
+        playBtn.addEventListener('click', () => {
+            const st = STATIONS[currentStationIndex];
+            const { date: countryNow } = getCountryNow(st);
+            const hours = countryNow.getHours();
+            const minutes = countryNow.getMinutes();
+
+            if (hours >= 0 && hours < 6) {
+                alert('⏰ En ' + st.name + ' son las ' + pad(hours) + ':' + pad(minutes) + ' (' + formatHour12(hours) + ').\n\nLa transmisión está finalizada. La radio vuelve a las 06:00 en punto (hora local).');
+                return;
+            }
+
+            if (isPlaying) {
+                audio.pause();
+                playIcon.classList.remove('fa-pause');
+                playIcon.classList.add('fa-play');
+                playBtn.classList.remove('playing');
+                equalizer.classList.remove('active');
+                statusLabel.textContent = "En pausa";
+                isPlaying = false;
+            } else {
+                statusLabel.textContent = "Sintonizando en vivo...";
+                syncAudioToLiveClock();
+
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        syncAudioToLiveClock();
+                        playIcon.classList.remove('fa-play');
+                        playIcon.classList.add('fa-pause');
+                        playBtn.classList.add('playing');
+                        equalizer.classList.add('active');
+                        statusLabel.textContent = "Estás escuchando (En Vivo)";
+                        isPlaying = true;
+                    }).catch(() => {
+                        statusLabel.textContent = "Error al reproducir audio";
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
